@@ -1,0 +1,58 @@
+name: Build and Release Windows Client
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Windows EXE
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore QwenPaw.csproj
+
+      - name: Publish Single-File Executable
+        run: |
+          dotnet publish QwenPaw.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o release
+
+      - name: Rename Output Executable
+        shell: pwsh
+        run: |
+          Move-Item -Path release/QwenPaw.exe -Destination release/QwenPaw-Windows-x64.exe -Force
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QwenPaw-Windows-x64
+          path: release/QwenPaw-Windows-x64.exe
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/heads/main')
+        with:
+          tag_name: v1.0.0
+          name: "QwenPaw Windows Client v1.0.0"
+          body: |
+            ## QwenPaw Windows Native Client (.exe)
+            - 专为解决 PC 远程 WebUI 假死、不实时断流问题打造
+            - 基于微软原生 WebView2 (Evergreen Chromium) 架构
+            - **禁用后台休眠**（`--disable-background-timer-throttling`），最小化与后台依然保持全速实时打字
+            - 内置免密直通指纹，打开秒进，零 Cookie 丢失
+            - 单文件免安装绿色 EXE，极轻量极速
+          files: release/QwenPaw-Windows-x64.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
