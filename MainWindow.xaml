@@ -7,8 +7,39 @@
         WindowStartupLocation="CenterScreen"
         Background="#18181b">
     <Grid>
-        <wv2:WebView2 Name="webView" />
-        <ProgressBar Name="progressBar" Height="3" VerticalAlignment="Top" 
-                     IsIndeterminate="True" Visibility="Visible" Foreground="#3b82f6" BorderThickness="0" Background="Transparent" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Top Status & Network Bar -->
+        <Border Grid.Row="0" Background="#141416" BorderBrush="#27272a" BorderThickness="0,0,0,1" Padding="8,3">
+            <DockPanel LastChildFill="False">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse x:Name="statusDot" Width="8" Height="8" Fill="#10b981" Margin="0,0,6,0" />
+                    <TextBlock x:Name="statusText" Text="⚡ 正在探测最佳网络..." Foreground="#a1a1aa" FontSize="11" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ComboBox x:Name="modeSelector" Width="140" Height="22" FontSize="11" 
+                              Background="#27272a" Foreground="#f4f4f5" BorderBrush="#3f3f46"
+                              SelectionChanged="ModeSelector_SelectionChanged" Margin="0,0,6,0">
+                        <ComboBoxItem Content="⚡ 智能双模 (推荐)" IsSelected="True" />
+                        <ComboBoxItem Content="🏠 强制局域网直连" />
+                        <ComboBoxItem Content="🌐 强制公网漫游" />
+                    </ComboBox>
+                    <Button x:Name="btnSettings" Content="⚙️ IP" Width="40" Height="22" FontSize="11"
+                            Background="#27272a" Foreground="#a1a1aa" BorderBrush="#3f3f46"
+                            Click="BtnSettings_Click" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Main WebView -->
+        <Grid Grid.Row="1">
+            <wv2:WebView2 Name="webView" />
+            <ProgressBar Name="progressBar" Height="2" VerticalAlignment="Top" 
+                         IsIndeterminate="True" Visibility="Visible" Foreground="#3b82f6" BorderThickness="0" Background="Transparent" />
+        </Grid>
     </Grid>
 </Window>

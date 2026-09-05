@@ -44,8 +44,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.0
-          name: "QwenPaw Windows Client v1.0.0"
+          tag_name: v1.1.0
+          name: "QwenPaw Windows Client v1.1.0 (智能双模版)"
           body: |
             ## QwenPaw Windows Native Client (.exe)
             - 专为解决 PC 远程 WebUI 假死、不实时断流问题打造
