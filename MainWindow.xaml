@@ -5,6 +5,7 @@
         Title="QwenPaw" Height="850" Width="1280"
         MinHeight="600" MinWidth="800"
         WindowStartupLocation="CenterScreen"
+        KeyDown="Window_KeyDown"
         Background="#18181b">
     <Grid>
         <Grid.RowDefinitions>
@@ -28,6 +29,9 @@
                         <ComboBoxItem Content="🏠 强制局域网直连" />
                         <ComboBoxItem Content="🌐 强制公网漫游" />
                     </ComboBox>
+                    <Button x:Name="btnRefresh" Content="🔄 刷新" Width="48" Height="22" FontSize="11"
+                            Background="#27272a" Foreground="#a1a1aa" BorderBrush="#3f3f46"
+                            Click="BtnRefresh_Click" Margin="0,0,6,0" ToolTip="重新检测网络并强制刷新 (Ctrl+F5)" />
                     <Button x:Name="btnSettings" Content="⚙️ IP" Width="40" Height="22" FontSize="11"
                             Background="#27272a" Foreground="#a1a1aa" BorderBrush="#3f3f46"
                             Click="BtnSettings_Click" />

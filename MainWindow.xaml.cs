@@ -126,7 +126,51 @@ namespace QwenPaw
             await webView.EnsureCoreWebView2Async(env);
             webView.CoreWebView2.Settings.UserAgent += " QwenPawMobileApp/861129";
             webView.CoreWebView2.Settings.IsStatusBarEnabled = false;
-            webView.NavigationCompleted += (s, args) => { progressBar.Visibility = Visibility.Collapsed; };
+            webView.NavigationCompleted += (s, args) =>
+            {
+                progressBar.Visibility = Visibility.Collapsed;
+                if (!args.IsSuccess && args.WebErrorStatus != CoreWebView2WebErrorStatus.OperationCanceled)
+                {
+                    if (_currentUrl.Contains(_config.LanHost) && _currentUrl.Contains(_config.LanPort.ToString()))
+                    {
+                        statusDot.Fill = new SolidColorBrush(Color.FromRgb(245, 158, 11));
+                        statusText.Text = "⚠️ 局域网连接超时，已自动无感切入公网漫游...";
+                        _currentUrl = _config.WanUrl;
+                        webView.CoreWebView2.Navigate(_config.WanUrl);
+                    }
+                    else
+                    {
+                        statusDot.Fill = new SolidColorBrush(Color.FromRgb(239, 68, 68));
+                        statusText.Text = "❌ 连接异常，请点击【🔄 刷新】重试";
+                    }
+                }
+            };
+            webView.CoreWebView2.Navigate(target);
+        }
+
+        private async void BtnRefresh_Click(object sender, RoutedEventArgs e)
+        {
+            await PerformHardRefreshAsync();
+        }
+
+        private async void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.F5)
+            {
+                e.Handled = true;
+                await PerformHardRefreshAsync();
+            }
+        }
+
+        private async Task PerformHardRefreshAsync()
+        {
+            if (!_isInitialized || webView?.CoreWebView2 == null) return;
+            progressBar.Visibility = Visibility.Visible;
+            statusDot.Fill = new SolidColorBrush(Color.FromRgb(245, 158, 11));
+            statusText.Text = "⚡ 正在重新探测最佳网络并强刷...";
+
+            string target = await ResolveTargetUrlAsync();
+            _currentUrl = target;
             webView.CoreWebView2.Navigate(target);
         }
 
