@@ -39,11 +39,51 @@
             </DockPanel>
         </Border>
 
-        <!-- Main WebView -->
+        <!-- Main Content Area -->
         <Grid Grid.Row="1">
+            <!-- WebView2 Browser Component -->
             <wv2:WebView2 Name="webView" />
+
+            <!-- Thin Top Loading Bar -->
             <ProgressBar Name="progressBar" Height="2" VerticalAlignment="Top" 
                          IsIndeterminate="True" Visibility="Visible" Foreground="#3b82f6" BorderThickness="0" Background="Transparent" />
+
+            <!-- Native Chat Recovery Overlay (消灭首启白屏，丝滑平滑过渡) -->
+            <Grid x:Name="recoveryOverlay" Background="#18181b" Visibility="Visible">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <!-- Icon / Brand Badge -->
+                    <Border Width="64" Height="64" CornerRadius="16" Background="#27272a" HorizontalAlignment="Center" Margin="0,0,0,18">
+                        <TextBlock Text="🐾" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <!-- Session Title / Brand Name -->
+                    <TextBlock x:Name="recoveryTitle" Text="QwenPaw" FontSize="18" FontWeight="SemiBold" 
+                               Foreground="#f4f4f5" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                    <!-- Status Text -->
+                    <TextBlock x:Name="recoveryStatus" Text="恢复对话中…" FontSize="13" 
+                               Foreground="#a1a1aa" HorizontalAlignment="Center" Margin="0,0,0,16" />
+                    <!-- Indeterminate Progress Indicator -->
+                    <ProgressBar x:Name="recoveryProgress" Width="180" Height="3" IsIndeterminate="True" 
+                                 Foreground="#3b82f6" Background="#27272a" BorderThickness="0" HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+
+            <!-- Error / Fallback Retry Overlay (断连兜底重试界面) -->
+            <Grid x:Name="errorOverlay" Background="#18181b" Visibility="Collapsed">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="400">
+                    <Border Width="60" Height="60" CornerRadius="30" Background="#3f1d24" HorizontalAlignment="Center" Margin="0,0,0,16">
+                        <TextBlock Text="⚠️" FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="网络连接异常" FontSize="18" FontWeight="SemiBold" Foreground="#f43f5e" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                    <TextBlock x:Name="errorDetailText" Text="未能成功连接到 QwenPaw 远程服务，请检查网络配置或重试。" FontSize="13" 
+                               Foreground="#a1a1aa" TextWrapping="Wrap" TextAlignment="Center" LineHeight="20" Margin="0,0,0,24" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button x:Name="btnErrorRetry" Content="🔄 重新连接" Width="100" Height="32" Background="#2563eb" Foreground="#ffffff" 
+                                BorderThickness="0" FontWeight="Medium" Click="BtnRefresh_Click" Margin="0,0,12,0" />
+                        <Button x:Name="btnErrorSwitchMode" Content="🌐 切换公网" Width="100" Height="32" Background="#27272a" Foreground="#f4f4f5" 
+                                BorderThickness="1" BorderBrush="#3f3f46" Click="BtnErrorSwitchMode_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
         </Grid>
     </Grid>
 </Window>

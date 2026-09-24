@@ -1,0 +1,1 @@
+function i(e){const t=e.trim().replace(/^v/i,"").match(/^(\d+)/);return t?`${t[1]}.x`:null}function l(e,r){if(!r)return!0;const t=e.qwenpaw_compat_labels;if(!t||t.length===0)return!0;const n=i(r);return n?t.includes(n):!0}export{l as i};

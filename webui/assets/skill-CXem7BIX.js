@@ -1,0 +1,1 @@
+const o=["https://platform.agentscope.io/skills/","https://skills.sh/","https://clawhub.ai/","https://skillsmp.com/","https://lobehub.com/","https://market.lobehub.com/","https://github.com/","https://modelscope.cn/skills/"];function l(t){return o.some(s=>t.startsWith(s))}const p="tag:";export{p as S,o as a,l as i};

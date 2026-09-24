@@ -29,30 +29,41 @@ jobs:
         run: |
           dotnet publish QwenPaw.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o release
 
-      - name: Rename Output Executable
+      - name: Organize Output Artifacts
         shell: pwsh
         run: |
-          Move-Item -Path release/QwenPaw.exe -Destination release/QwenPaw-Windows-x64.exe -Force
+          # 产物重命名为 QwenPaw-Windows-x64-v1.2.0.exe
+          Copy-Item -Path release/QwenPaw.exe -Destination release/QwenPaw-Windows-x64-v1.2.0.exe -Force
+          Copy-Item -Path release/QwenPaw.exe -Destination release/QwenPaw-Windows-x64.exe -Force
+          
+          # 打包包含本地 WebUI 静态包的完整绿色发布 ZIP
+          if (Test-Path release/webui) {
+            Compress-Archive -Path release/QwenPaw-Windows-x64-v1.2.0.exe, release/webui -DestinationPath release/QwenPaw-Windows-x64-v1.2.0-with-webui.zip -Force
+          }
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: QwenPaw-Windows-x64
-          path: release/QwenPaw-Windows-x64.exe
+          name: QwenPaw-Windows-x64-v1.2.0
+          path: |
+            release/QwenPaw-Windows-x64-v1.2.0.exe
+            release/QwenPaw-Windows-x64-v1.2.0-with-webui.zip
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.1.1
-          name: "QwenPaw Windows Client v1.1.1 (双模容灾自愈版)"
+          tag_name: v1.2.0
+          name: "QwenPaw Windows Client v1.2.0 (本地WebUI极速与无感恢复版)"
           body: |
-            ## QwenPaw Windows Native Client (.exe)
-            - 专为解决 PC 远程 WebUI 假死、不实时断流问题打造
-            - 基于微软原生 WebView2 (Evergreen Chromium) 架构
-            - **禁用后台休眠**（`--disable-background-timer-throttling`），最小化与后台依然保持全速实时打字
-            - 内置免密直通指纹，打开秒进，零 Cookie 丢失
-            - 单文件免安装绿色 EXE，极轻量极速
-          files: release/QwenPaw-Windows-x64.exe
+            ## QwenPaw Windows Native Client v1.2.0
+            - 🚀 **本地 WebUI 极速加载**：内置静态资源包，通过 WebView2 虚拟域名映射（appassets.local）实现毫秒级首屏加载；
+            - 💬 **会话记忆与直达**：自动记忆上次对话 ID（last_chat_id），冷启动直达上次会话，会话切换无整页刷新；
+            - ✨ **原生对话恢复视图**：消灭冷启动白屏，加载就绪后丝滑淡出过渡；
+            - 🛡️ **双模容灾自愈**：局域网直连/公网漫游智能探测，本地虚拟域名加载异常自动降级回退；
+            - ⚡ **API 代理同源转发**：C# 原生透明代理转发 /api/ 请求，自动注入鉴权 UA 与 Cookie，免除 CORS 阻碍。
+          files: |
+            release/QwenPaw-Windows-x64-v1.2.0.exe
+            release/QwenPaw-Windows-x64-v1.2.0-with-webui.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
