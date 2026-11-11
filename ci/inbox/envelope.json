@@ -1,5 +1,5 @@
 {
-  "run_id": "43104155328",
+  "run_id": "43115674948",
   "capsule_sha256": "047b2a38383eb160af67d6f15c811a16e47ead9d40dd9360abed4cd97ca2e967",
   "format": "QPCICAP1",
   "parts": [
@@ -18,6 +18,6 @@
     "source.part-012.cap",
     "source.part-013.cap"
   ],
-  "patch_sha256": "b53b01246d3bc396a6d886ce34bed2dd9a62949d5bd9f1b9a9853db38e5b0932",
-  "candidate_source_label": "r6"
+  "patch_sha256": "c610e7844f0f709987f070990d98ad9feea4086ddfc4dd0bdb4e9f8a9b878c5c",
+  "candidate_source_label": "r7"
 }
