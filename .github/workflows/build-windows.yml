@@ -70,6 +70,15 @@ jobs:
           & ./ci/capsule.ps1 -Mode decrypt -InputFile ci/inbox/source.cap -OutputFile private-source.zip
           Expand-Archive -LiteralPath private-source.zip -DestinationPath .private -Force
           Get-Content .private/mask-values.txt | ForEach-Object { if ($_.Length -gt 3) { Write-Output "::add-mask::$_" } }
+      - name: Apply authenticated candidate update
+        run: |
+          $envelope = Get-Content ci/inbox/envelope.json -Raw | ConvertFrom-Json
+          if ($envelope.patch_sha256) {
+            $actual = (Get-FileHash ci/inbox/update.cap).Hash.ToLowerInvariant()
+            if ($actual -ne $envelope.patch_sha256) { throw 'Encrypted update integrity mismatch' }
+            & ./ci/capsule.ps1 -Mode decrypt -InputFile ci/inbox/update.cap -OutputFile private-update.zip
+            Expand-Archive -LiteralPath private-update.zip -DestinationPath .private -Force
+          }
       - name: Native Windows build and verification
         run: '& ./ci/verify-native.ps1 -SourceRoot .private/source -OutDir .private/result'
       - name: Encrypt actual build and test evidence
