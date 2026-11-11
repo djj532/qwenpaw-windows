@@ -1,0 +1,21 @@
+{
+  "run_id": "43075942130",
+  "capsule_sha256": "047b2a38383eb160af67d6f15c811a16e47ead9d40dd9360abed4cd97ca2e967",
+  "format": "QPCICAP1",
+  "parts": [
+    "source.part-000.cap",
+    "source.part-001.cap",
+    "source.part-002.cap",
+    "source.part-003.cap",
+    "source.part-004.cap",
+    "source.part-005.cap",
+    "source.part-006.cap",
+    "source.part-007.cap",
+    "source.part-008.cap",
+    "source.part-009.cap",
+    "source.part-010.cap",
+    "source.part-011.cap",
+    "source.part-012.cap",
+    "source.part-013.cap"
+  ]
+}
