@@ -78,6 +78,7 @@ jobs:
             if ($actual -ne $envelope.patch_sha256) { throw 'Encrypted update integrity mismatch' }
             & ./ci/capsule.ps1 -Mode decrypt -InputFile ci/inbox/update.cap -OutputFile private-update.zip
             Expand-Archive -LiteralPath private-update.zip -DestinationPath .private -Force
+            Get-Content .private/mask-values.txt | ForEach-Object { if ($_.Length -gt 3) { Write-Output "::add-mask::$_" } }
           }
       - name: Native Windows build and verification
         run: '& ./ci/verify-native.ps1 -SourceRoot .private/source -OutDir .private/result'
