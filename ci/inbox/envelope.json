@@ -1,5 +1,5 @@
 {
-  "run_id": "43075942130",
+  "run_id": "43082981634",
   "capsule_sha256": "047b2a38383eb160af67d6f15c811a16e47ead9d40dd9360abed4cd97ca2e967",
   "format": "QPCICAP1",
   "parts": [
@@ -17,5 +17,7 @@
     "source.part-011.cap",
     "source.part-012.cap",
     "source.part-013.cap"
-  ]
+  ],
+  "patch_sha256": "bb1f1cd78c4bc2bf1b0e2deb724ed1e580831bd3b9c77baeff70ff7288b3a9ce",
+  "candidate_source_label": "r2"
 }
