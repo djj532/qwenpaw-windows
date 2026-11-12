@@ -1,0 +1,23 @@
+{
+  "run_id": "43260570486",
+  "capsule_sha256": "d07464475a062eb40eb4df12ec8165001aab659649f75826186ef484bef51dc3",
+  "format": "QPCICAP1",
+  "parts": [
+    "source.part-000.cap",
+    "source.part-001.cap",
+    "source.part-002.cap",
+    "source.part-003.cap",
+    "source.part-004.cap",
+    "source.part-005.cap",
+    "source.part-006.cap",
+    "source.part-007.cap",
+    "source.part-008.cap",
+    "source.part-009.cap",
+    "source.part-010.cap",
+    "source.part-011.cap",
+    "source.part-012.cap",
+    "source.part-013.cap"
+  ],
+  "source_files": 3480,
+  "frozen_candidate_frontend": "0b7b850d0f4bdb0fbb09fa979afd57888831cde86a9d5a26a1bea082fa0abd7e"
+}
