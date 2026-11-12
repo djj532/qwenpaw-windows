@@ -1,69 +1,103 @@
-name: Build and Release Windows Client
-
+name: Private candidate native verification
 on:
-  push:
-    branches: [ "main" ]
   workflow_dispatch:
-
 permissions:
-  contents: write
-
+  contents: read
 jobs:
-  build:
-    name: Build Windows EXE
+  verify:
     runs-on: windows-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
-
-      - name: Restore Dependencies
-        run: dotnet restore QwenPaw.csproj
-
-      - name: Publish Single-File Executable
-        run: |
-          dotnet publish QwenPaw.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o release
-
-      - name: Organize Output Artifacts
+    timeout-minutes: 70
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_NOLOGO: '1'
+    defaults:
+      run:
         shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create ephemeral encrypted-transport session
         run: |
-          # 产物重命名为 QwenPaw-Windows-x64-v1.2.0.exe
-          Copy-Item -Path release/QwenPaw.exe -Destination release/QwenPaw-Windows-x64-v1.2.0.exe -Force
-          Copy-Item -Path release/QwenPaw.exe -Destination release/QwenPaw-Windows-x64.exe -Force
-          
-          # 打包包含本地 WebUI 静态包的完整绿色发布 ZIP
-          if (Test-Path release/webui) {
-            Compress-Archive -Path release/QwenPaw-Windows-x64-v1.2.0.exe, release/webui -DestinationPath release/QwenPaw-Windows-x64-v1.2.0-with-webui.zip -Force
-          }
-
-      - name: Upload Artifact
+          New-Item -Path .private -ItemType Directory | Out-Null
+          $rsa = [Security.Cryptography.RSA]::Create(3072)
+          try {
+            [IO.File]::WriteAllText((Join-Path $PWD '.private/transport-private.pem'), $rsa.ExportPkcs8PrivateKeyPem())
+            [IO.File]::WriteAllText((Join-Path $PWD 'transport-public.pem'), $rsa.ExportSubjectPublicKeyInfoPem())
+          } finally { $rsa.Dispose() }
+          @{run_id=$env:GITHUB_RUN_ID;algorithm='RSA3072-OAEP-SHA256';head=$env:GITHUB_SHA} |
+            ConvertTo-Json | Set-Content transport-public.json
+      - name: Publish public transport identity only
         uses: actions/upload-artifact@v4
         with:
-          name: QwenPaw-Windows-x64-v1.2.0
+          name: transport-public-key
           path: |
-            release/QwenPaw-Windows-x64-v1.2.0.exe
-            release/QwenPaw-Windows-x64-v1.2.0-with-webui.zip
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/heads/main')
+            transport-public.pem
+            transport-public.json
+          retention-days: 1
+      - name: Wait for authenticated encrypted source inbox
+        run: |
+          $found = $false
+          for ($i = 0; $i -lt 180; $i++) {
+            & git fetch --depth=1 origin $env:GITHUB_REF_NAME 2>&1 | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+              $entry = & git ls-tree --name-only FETCH_HEAD -- ci/inbox/envelope.json
+              if ($entry) {
+                & git checkout FETCH_HEAD -- ci/inbox
+                if ($LASTEXITCODE -ne 0) { throw 'Source inbox checkout failed' }
+                $envelope = Get-Content ci/inbox/envelope.json -Raw | ConvertFrom-Json
+                if ([string]$envelope.run_id -eq [string]$env:GITHUB_RUN_ID) { $found = $true; break }
+              }
+            }
+            Start-Sleep -Seconds 10
+          }
+          if (-not $found) { throw 'No source delivered for this native session' }
+          if ($envelope.parts) {
+            $stream = [IO.File]::Open((Join-Path $PWD 'ci/inbox/source.cap'), [IO.FileMode]::CreateNew)
+            try {
+              foreach ($part in $envelope.parts) {
+                if ($part -notmatch '^source\.part-[0-9]{3}\.cap$') { throw 'Unsafe encrypted chunk name' }
+                $input = [IO.File]::OpenRead((Join-Path $PWD "ci/inbox/$part"))
+                try { $input.CopyTo($stream) } finally { $input.Dispose() }
+              }
+            } finally { $stream.Dispose() }
+          }
+          $actual = (Get-FileHash ci/inbox/source.cap -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $envelope.capsule_sha256) { throw 'Encrypted source integrity mismatch' }
+      - uses: actions/setup-dotnet@v4
         with:
-          tag_name: v1.2.0
-          name: "QwenPaw Windows Client v1.2.0 (本地WebUI极速与无感恢复版)"
-          body: |
-            ## QwenPaw Windows Native Client v1.2.0
-            - 🚀 **本地 WebUI 极速加载**：内置静态资源包，通过 WebView2 虚拟域名映射（appassets.local）实现毫秒级首屏加载；
-            - 💬 **会话记忆与直达**：自动记忆上次对话 ID（last_chat_id），冷启动直达上次会话，会话切换无整页刷新；
-            - ✨ **原生对话恢复视图**：消灭冷启动白屏，加载就绪后丝滑淡出过渡；
-            - 🛡️ **双模容灾自愈**：局域网直连/公网漫游智能探测，本地虚拟域名加载异常自动降级回退；
-            - ⚡ **API 代理同源转发**：C# 原生透明代理转发 /api/ 请求，自动注入鉴权 UA 与 Cookie，免除 CORS 阻碍。
-          files: |
-            release/QwenPaw-Windows-x64-v1.2.0.exe
-            release/QwenPaw-Windows-x64-v1.2.0-with-webui.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          dotnet-version: '8.0.x'
+      - name: Open private source envelope
+        run: |
+          & ./ci/capsule.ps1 -Mode decrypt -InputFile ci/inbox/source.cap -OutputFile private-source.zip
+          Expand-Archive -LiteralPath private-source.zip -DestinationPath .private -Force
+          Get-Content .private/mask-values.txt | ForEach-Object { if ($_.Length -gt 3) { Write-Output "::add-mask::$_" } }
+      - name: Apply authenticated candidate update
+        run: |
+          $envelope = Get-Content ci/inbox/envelope.json -Raw | ConvertFrom-Json
+          if ($envelope.patch_sha256) {
+            $actual = (Get-FileHash ci/inbox/update.cap).Hash.ToLowerInvariant()
+            if ($actual -ne $envelope.patch_sha256) { throw 'Encrypted update integrity mismatch' }
+            & ./ci/capsule.ps1 -Mode decrypt -InputFile ci/inbox/update.cap -OutputFile private-update.zip
+            Expand-Archive -LiteralPath private-update.zip -DestinationPath .private -Force
+            Get-Content .private/mask-values.txt | ForEach-Object { if ($_.Length -gt 3) { Write-Output "::add-mask::$_" } }
+          }
+      - name: Native Windows build and verification
+        run: '& ./ci/verify-native.ps1 -SourceRoot .private/source -OutDir .private/result'
+      - name: Encrypt actual build and test evidence
+        if: always()
+        run: |
+          if (Test-Path .private/result) {
+            Compress-Archive -Path .private/result/* -DestinationPath private-result.zip
+            & ./ci/capsule.ps1 -Mode encrypt -InputFile private-result.zip -OutputFile candidate-result.cap
+            @{format='QPCICAP1';sha256=(Get-FileHash candidate-result.cap).Hash.ToLowerInvariant();run_id=$env:GITHUB_RUN_ID} |
+              ConvertTo-Json | Set-Content capsule-manifest.json
+          } else { throw 'No actual build evidence produced' }
+      - name: Upload encrypted candidate only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: candidate-native-encrypted
+          path: |
+            candidate-result.cap
+            capsule-manifest.json
+          if-no-files-found: error
+          retention-days: 1
